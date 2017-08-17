@@ -1,0 +1,125 @@
+<dom-module id="exercice-element">
+  <template>
+    <link href="style.css" rel="stylesheet">
+    <div id="composant">
+		<h2>Carte [[projet]]</h2>
+		<div class="zone">
+			<input id="champ" type="text"/>
+			<button id="bouton">OK</button>
+		</div>
+		<br/>
+		<div id="zone" class="zone">
+			<!-- Aperçu d'une option créée dynamiquement
+		
+			<div class="option">
+				<span>Toulouse</span>
+				<button class="fermer">X</button>
+			</div>
+			-->
+		</div>
+	</div>
+  </template>
+
+  <script>
+    /**
+     * `exercice-element`
+     * exercice
+     *
+     * @customElement
+     * @polymer
+     * @demo demo/index.html
+     */
+    class ExerciceElement extends Polymer.Element {
+      static get is() { return 'exercice-element'; }
+      static get properties() {
+        return {
+          projet: {
+            type: String,
+            value: 'Exercice'
+          },
+          villes: {
+          	type: Array,
+          	value: ['Lyon', 'Paris', 'Marseille', 'Toulouse', 'Lille']
+          },
+          entreesVilles: {
+          	type: Array,
+          	value: []
+          },
+          texteChamp: {
+          	type: String,
+          	value: ''
+          }
+        };
+      }
+      _capital(chaine) {
+		return chaine.charAt(0).toUpperCase() + chaine.slice(1).toLowerCase();
+	  }
+      _actualisation_champ() {
+      	this.texteChamp = Array.from(this.entreesVilles).join(' ');
+		this.shadowRoot.querySelector('#champ').value = this.texteChamp;
+      }
+      _creationOption(ville) {
+        // Création dynamique d'une option avec son bouton 'fermer'
+		let div = document.createElement('div');
+		div.id = ville;
+		div.classList.add('option');
+		this.shadowRoot.querySelector('#zone').appendChild(div);
+		let span = document.createElement('span');
+		let contenu = document.createTextNode(ville);
+		span.appendChild(contenu);
+		div.appendChild(span);
+		let bouton = document.createElement('button');
+		bouton.classList.add('fermer');
+		let signe = document.createTextNode('X');
+		bouton.appendChild(signe);
+		div.appendChild(bouton);
+		let root = this.shadowRoot;
+		let champ = root.querySelector('#champ');
+		bouton.addEventListener('click', event => {
+		  event.target.parentElement.style.display = "none";
+		  this.entreesVilles.delete(event.target.parentElement.firstChild.innerText);
+		  this._actualisation_champ();
+		});
+      }
+      _actualisation_options() {
+		this.shadowRoot.querySelectorAll('.option').forEach(option => {
+			if(!this.texteChamp.includes(this._capital(option.firstChild.innerText))) {
+				option.style.display= 'none';
+			}
+		});
+      }
+      connectedCallback() {
+		super.connectedCallback();
+		let root = this.shadowRoot;
+		// Traitement des entrées de l'utilisateur
+		root.querySelector('#bouton').addEventListener('click', () => {
+		  let champ = root.querySelector('#champ');
+		  let entrees = champ.value.split(" ");
+		  this.entreesVilles = new Set(entrees);
+		  // Suppression des doublons de l'utilisateur avec "Set()"
+		  // On réécrit chaque entrée avec la 1ère lettre en majuscule et les autres en minuscules avec "map()"
+		  this.entreesVilles = new Set([...this.entreesVilles].map(entree => this._capital(entree)));
+		  // On conserve les entrées qui correspondent aux valeurs du tableau "villes"
+		  this.entreesVilles.forEach(ville => {
+		    console.log(this.entreesVilles);
+		  	if(this.villes.includes(ville)) {
+		  		if(root.querySelector('#'+ ville)) {
+		  		  root.querySelector('#'+ ville).style.display = 'inline-block';
+		  		}
+		  		else {
+		  		  this._creationOption(ville);
+		  		}
+		  	}
+		  	else {
+		  		this.entreesVilles.delete(ville);
+		  	}
+		  });
+		  this._actualisation_champ();
+		  this._actualisation_options();
+		});
+	  }
+    }
+
+    window.customElements.define(ExerciceElement.is, ExerciceElement);
+  </script>
+</dom-module>
